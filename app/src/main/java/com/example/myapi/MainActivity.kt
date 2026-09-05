@@ -31,17 +31,23 @@ class MainActivity : ComponentActivity() {
     private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             //判斷回傳結果是否為空
+            //如果 intent.extras?.getString("json") 的結果是 null，就直接終止目前這個函式（Function）的執行，不再往下走。
             val json = intent.extras?.getString("json")?: return
             //解析Intent取得JSON字串，把json物件以Data格式做轉換
-            // 宣告你要解析成 List<Station>
+            // 宣告你要解析成 List<Results>
+            /*
+            TypeToken<List<Results>>()：這是 Gson 提供的一個抽象類別。透過泛型 <List<Results>>，我們精確地告訴程式：「我要找的是一個 List，裡面的元素型別是 Results」。
+            object : ... {}：這是 Kotlin 的 物件表達式（Object Expression），用來建立一個匿名內部類別（Anonymous Inner Class）的實例。為什麼要用 object :？因為 TypeToken 的建構子受保護，且 Gson 需要透過這個匿名類別去「抓取」並保留泛型的實際型別（繞過編譯期的型別擦除）。
+            .type：這是 TypeToken 類別的一個屬性，會回傳一個 java.lang.reflect.Type 物件。這個物件記錄了剛剛指定的 List<Results> 詳細型別資訊，正是 Gson 解析時所需要的參數。
+            */
             val listType = object : TypeToken<List<Results>>() {}.type
             val data: List<Results> = Gson().fromJson(json, listType)
 
+            //建立一個型別為 String?（可為空）、大小等於 data.size 的陣列，而且這個陣列剛被建立時，裡面的每一個格子全部都是 null
             val items = arrayOfNulls<String>(data.size)
             //建立一個字串陣列，用於提取『站名』與『目的地』資訊
             for(i in 0 until data.size)
                 items[i] = "\n列車即將進入 :${data[i].Station}" +
-                        //"\n列車行駛目的地 :${data.result.results[i].Destination}"
                         "\n列車行駛目的地 :${data[i].Destination}"
             //使用者介面的操作必須在UI Thread上執行
             this@MainActivity.runOnUiThread {
