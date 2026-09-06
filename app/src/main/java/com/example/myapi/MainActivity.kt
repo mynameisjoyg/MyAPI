@@ -87,6 +87,9 @@ class MainActivity : ComponentActivity() {
                 override fun onResponse(call: Call, response: Response) {
                     //判斷伺服器回傳狀態
                     when{
+                        /*200：代表 OK（成功）。伺服器順利收到請求，並且成功把資料（就是你的 JSON）交給你。
+                        404：代表找不到網址（Not Found）。
+                        500：代表伺服器內部發生錯誤（Internal Server Error）。 */
                         response.code ==200 ->{
                             //判斷回傳是否為空
                             val json = response.body?.string()?:return
