@@ -52,6 +52,9 @@ class MainActivity : ComponentActivity() {
             //使用者介面的操作必須在UI Thread上執行
             this@MainActivity.runOnUiThread {
                 //使用Dialog呈現結果
+                /* dialogInterface, i -> dialogInterface.dismiss() 這是Lambda表達式（匿名函式），用來處理當使用者點擊清單對話框（setItems）中某一項時要執行的動作。
+                dialogInterface：代表這個對話框本身。i：代表使用者點擊的是第幾個選項。
+                 */
                 AlertDialog.Builder(this@MainActivity)
                     .setTitle("台北捷運列車到站站名")
                     .setItems(items) { dialogInterface, i ->
