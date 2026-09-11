@@ -40,15 +40,14 @@ class MainActivity : ComponentActivity() {
             object : ... {}：這是 Kotlin 的 物件表達式（Object Expression），用來建立一個匿名內部類別（Anonymous Inner Class）的實例。為什麼要用 object :？因為 TypeToken 的建構子受保護，且 Gson 需要透過這個匿名類別去「抓取」並保留泛型的實際型別（繞過編譯期的型別擦除）。
             .type：這是 TypeToken 類別的一個屬性，會回傳一個 java.lang.reflect.Type 物件。這個物件記錄了剛剛指定的 List<Results> 詳細型別資訊，正是 Gson 解析時所需要的參數。
             */
-            val listType = object : TypeToken<List<Results>>() {}.type
-            val data: List<Results> = Gson().fromJson(json, listType)
+            val storeType = object : TypeToken<Results>() {}.type
+            val data : Results = Gson().fromJson(json, storeType)
 
             //建立一個型別為 String?（可為空）、大小等於 data.size 的陣列，而且這個陣列剛被建立時，裡面的每一個格子全部都是 null
-            val items = arrayOfNulls<String>(data.size)
+            val items = arrayOfNulls<String>(1)
             //建立一個字串陣列，用於提取『站名』與『目的地』資訊
-            for(i in 0 until data.size)
-                items[i] = "\n列車即將進入 :${data[i].Station}" +
-                        "\n列車行駛目的地 :${data[i].Destination}"
+            for(i in 0 until 1)
+                items[i] = "\n學習 :${data.SchoolClassName}"
             //使用者介面的操作必須在UI Thread上執行
             this@MainActivity.runOnUiThread {
                 //使用Dialog呈現結果
@@ -56,7 +55,7 @@ class MainActivity : ComponentActivity() {
                 dialogInterface：代表這個對話框本身。i：代表使用者點擊的是第幾個選項。
                  */
                 AlertDialog.Builder(this@MainActivity)
-                    .setTitle("台北捷運列車到站站名")
+                    .setTitle("學習")
                     .setItems(items) { dialogInterface, i ->
                         dialogInterface.dismiss()
                     }
@@ -80,7 +79,7 @@ class MainActivity : ComponentActivity() {
         val btn_query = findViewById<Button>(R.id.btn_query)
         btn_query.setOnClickListener {
             //建立一個Request物件，並使用url()方法加入URL
-            val req = Request.Builder().url("https://tcgmetro.blob.core.windows.net/stationnames/stations.json").build()
+            var req = Request.Builder().url("https://demo2-22z2.onrender.com/study").build()
             //建立okHttpClient物件，newCall()送出請求，enqueue()接收回傳
             OkHttpClient().newCall(req).enqueue(object: Callback {
                 //發送成功執行此方法
@@ -127,8 +126,7 @@ class Data {
         lateinit var results : Array<Results>
 
         class Results {
-            val Station = ""    //站名
-            val Destination = ""    //目的地
+            val SchoolClassName = ""
         }
     }
 }
