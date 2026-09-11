@@ -6,10 +6,17 @@
     android:fitsSystemWindows="true">
 
     <Button
-            android:id="@+id/btn_query"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="查詢車班" />
+        android:id="@+id/btn_query"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="執行" />
+
+    <EditText
+        android:id="@+id/ed_url"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="text" />
 
 
 </LinearLayout>

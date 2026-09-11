@@ -27,94 +27,56 @@ import okhttp3.*
 import java.io.IOException
 
 class MainActivity : ComponentActivity() {
-    private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            //判斷回傳結果是否為空
-            //如果 intent.extras?.getString("json") 的結果是 null，就直接終止目前這個函式（Function）的執行，不再往下走。
-            val json = intent.extras?.getString("json")?: return
-            //解析Intent取得JSON字串，把json物件以Data格式做轉換
-            // 宣告你要解析成 List<Results>
-            /*
-            TypeToken<List<Results>>()：這是 Gson 提供的一個抽象類別。透過泛型 <List<Results>>，我們精確地告訴程式：「我要找的是一個 List，裡面的元素型別是 Results」。
-            object : ... {}：這是 Kotlin 的 物件表達式（Object Expression），用來建立一個匿名內部類別（Anonymous Inner Class）的實例。為什麼要用 object :？因為 TypeToken 的建構子受保護，且 Gson 需要透過這個匿名類別去「抓取」並保留泛型的實際型別（繞過編譯期的型別擦除）。
-            .type：這是 TypeToken 類別的一個屬性，會回傳一個 java.lang.reflect.Type 物件。這個物件記錄了剛剛指定的 List<Results> 詳細型別資訊，正是 Gson 解析時所需要的參數。
-            */
-            val myType = object : TypeToken<List<String>>() {}.type
-            val data : List<String> = Gson().fromJson(json, myType)
+    private val receiver: BroadcastReceiver = object: BroadcastReceiver(){
+        override fun onReceive(context: Context?, intent: Intent?) {
+            var json = intent?.extras?.getString("json")?:return
+            var myType = object: TypeToken<List<String>>(){}.type
+            var data: List<String> = Gson().fromJson(json, myType)
 
-            //建立一個型別為 String?（可為空）、大小等於 data.size 的陣列，而且這個陣列剛被建立時，裡面的每一個格子全部都是 null
-            val items = arrayOfNulls<String>(data.size)
-            //建立一個字串陣列，用於提取『站名』與『目的地』資訊
-            for(i in 0 until data.size)
-                items[i] = "\n學習 :${data[i]}"
-            //使用者介面的操作必須在UI Thread上執行
-            this@MainActivity.runOnUiThread {
-                //使用Dialog呈現結果
-                /* dialogInterface, i -> dialogInterface.dismiss() 這是Lambda表達式（匿名函式），用來處理當使用者點擊清單對話框（setItems）中某一項時要執行的動作。
-                dialogInterface：代表這個對話框本身。i：代表使用者點擊的是第幾個選項。
-                 */
-                AlertDialog.Builder(this@MainActivity)
-                    .setTitle("學習")
-                    .setItems(items) { dialogInterface, i ->
-                        dialogInterface.dismiss()
-                    }
-                    .show()
+            var items = arrayOfNulls<String>(data.size)
+            for(i in 0 until data.size){
+                items[i]="Subject: ${data[i]}"
             }
+            AlertDialog.Builder(this@MainActivity).setItems(items) {
+                dialogInterface, i -> dialogInterface.dismiss()
+            }.show()
+
         }
+
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        //註冊Receiver，用來接收Http Response
-        // 如果這個廣播只允許「你自己的 App 內部」發送與接收（最常見、最安全）：
-        ContextCompat.registerReceiver(
-            this,
-            receiver,
-            IntentFilter("MyMessage"),
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
-
-        val btn_query = findViewById<Button>(R.id.btn_query)
-        btn_query.setOnClickListener {
-            //建立一個Request物件，並使用url()方法加入URL
+        var bt_query = findViewById<Button>(R.id.btn_query)
+        bt_query.setOnClickListener {
             var req = Request.Builder().url("https://demo2-22z2.onrender.com/myStudy").build()
-            //建立okHttpClient物件，newCall()送出請求，enqueue()接收回傳
-            OkHttpClient().newCall(req).enqueue(object: Callback {
-                //發送成功執行此方法
+            OkHttpClient().newCall(req).enqueue(object: Callback{
+                override fun onFailure(call: Call, e: okio.IOException) {
+                    TODO("Not yet implemented")
+                }
+
                 override fun onResponse(call: Call, response: Response) {
-                    //判斷伺服器回傳狀態
-                    when{
-                        /*200：代表 OK（成功）。伺服器順利收到請求，並且成功把資料（就是你的 JSON）交給你。
-                        404：代表找不到網址（Not Found）。
-                        500：代表伺服器內部發生錯誤（Internal Server Error）。 */
-                        response.code ==200 ->{
-                            //判斷回傳是否為空
-                            val json = response.body?.string()?:return
-                            //取得用response的回傳結果（Json字串），並使用廣播發送
-                            val intent = Intent("MyMessage").apply {
+                    when {
+                        response.code == 200 -> {
+                            var json = response.body.string()?:return
+                            var intent = Intent("MyMessage").apply {
                                 putExtra("json", json)
-                                setPackage(packageName) // 綁定自己的包名，把它變成「明確意圖」
+                                setPackage(packageName)
                             }
                             sendBroadcast(intent)
                         }
-                        !response.isSuccessful ->Log.e("伺服器錯誤","${response.code} ${response.message}")
-                        else ->Log.e("其他錯誤","${response.code} ${response.message}")
                     }
                 }
-                //發送失敗執行此方法
-                override fun onFailure(call: Call, e: IOException) {
-                    Log.e("查詢失敗","$e")
-                }
+
             })
         }
+        ContextCompat.registerReceiver(this, receiver, IntentFilter("MyMessage"), ContextCompat.RECEIVER_NOT_EXPORTED)
 
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        //註銷Receiver
-        unregisterReceiver(receiver)
     }
 }
 
